@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Stat Clash II: Comparative War Duel!</title>
+    <style>
+        :root {
+            --primary: #2563EB;
+            --primary-dark: #1D4ED8;
+            --secondary: #10B981;
+            --danger: #EF4444;
+            --danger-dark: #DC2626;
+            --warning: #F59E0B;
+            --bg-dark: #0F172A;
+            --card-bg: #FFFFFF;
+            --text-dark: #1E293B;
+            --text-light: #F8FAFC;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            padding: 12px;
+            background: linear-gradient(135deg, #0f172a, #450a0a, #7f1d1d, #1e1b4b);
+            background-size: 300% 300%;
+            animation: gradientBG 12s ease infinite;
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 950px;
+            background: rgba(241, 245, 249, 0.96);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            border: 4px solid #DC2626;
+        }
+
+        /* Top HUD */
+        .hud {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1E293B;
+            color: var(--text-light);
+            padding: 12px 18px;
+            border-radius: 14px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .audio-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            background: #334155;
+            color: white;
+            border: 2px solid #64748B;
+            border-radius: 10px;
+            padding: 8px 14px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            touch-action: manipulation;
+        }
+        .icon-btn:hover, .icon-btn:active { background: #475569; transform: scale(1.05); }
+
+        .progress-bar-container {
+            width: 100%;
+            background-color: #CBD5E1;
+            border-radius: 10px;
+            height: 18px;
+            margin-top: 10px;
+            overflow: hidden;
+            border: 2px solid #94A3B8;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #DC2626, #F59E0B, #10B981);
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        /* Screens */
+        .screen { display: none; flex-direction: column; width: 100%; }
+        .screen.active { display: flex; animation: fadeIn 0.4s ease-out; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Typography & Buttons */
+        h1, h2, h3 { margin: 8px 0; text-align: center; }
+        h1 { color: #991B1B; font-size: 2.2rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.15); }
+        h2 { color: #1E293B; font-size: 1.5rem; }
+
+        .btn {
+            background: #DC2626;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 1.2rem;
+            border-radius: 14px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+            box-shadow: 0 4px 10px rgba(220, 38, 38, 0.4);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            touch-action: manipulation;
+        }
+        .btn:hover, .btn:active:not(:disabled) { background: #B91C1C; transform: translateY(-2px); box-shadow: 0 6px 14px rgba(220, 38, 38, 0.5); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        .btn-secondary { background: #64748B; box-shadow: none; }
+        .btn-secondary:hover, .btn-secondary:active:not(:disabled) { background: #475569; }
+
+        .btn-warning { background: var(--warning); color: #0F172A; }
+        .btn-warning:hover, .btn-warning:active:not(:disabled) { background: #D97706; color: white; }
+
+        .btn-audio {
+            background: #2563EB;
+            color: white;
+            border: 2px solid #1D4ED8;
+            border-radius: 10px;
+            padding: 6px 14px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: 8px;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+            vertical-align: middle;
+        }
+        .btn-audio:hover, .btn-audio:active { background: #1D4ED8; transform: scale(1.05); }
+
+        /* Arena Layout */
+        .arena-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-top: 10px;
+        }
+
+        .boss-box {
+            background: linear-gradient(180deg, #FFEDD5 0%, #FED7AA 100%);
+            border: 3px solid #F97316;
+            border-radius: 18px;
+            padding: 14px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 6px 12px rgba(249, 115, 22, 0.2);
+        }
+
+        .hp-bar-outer {
+            width: 100%;
+            max-width: 380px;
+            background: #475569;
+            height: 24px;
+            border-radius: 12px;
+            margin: 6px auto;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid #1E293B;
+        }
+
+        .hp-bar-inner {
+            height: 100%;
+            background: linear-gradient(90deg, #EF4444, #F59E0B);
+            width: 100%;
+            transition: width 0.5s ease-out;
+        }
+
+        .hp-text {
+            position: absolute;
+            top: 0; left: 0; width: 100%;
+            line-height: 20px;
+            color: white;
+            font-weight: bold;
+            font-size: 0.95rem;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .cards-row {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        /* Card Styles */
+        .card {
+            background: white;
+            border: 4px solid #CBD5E1;
+            border-radius: 16px;
+            padding: 10px;
+            width: 150px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+            position: relative;
+            touch-action: manipulation;
+        }
+
+        .card:hover:not(.disabled):not(.boss-card), .card:active:not(.disabled):not(.boss-card) {
+            transform: translateY(-4px);
+            border-color: #DC2626;
+            box-shadow: 0 10px 20px rgba(220, 38, 38, 0.25);
+        }
+
+        .card.selected {
+            border-color: #DC2626;
+            background-color: #FEF2F2;
+            transform: scale(1.05);
+            box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.4);
+        }
+
+        .card.boss-card {
+            cursor: default;
+            border-color: var(--danger);
+            background: #FEF2F2;
+        }
+
+        .card-emoji { font-size: 3.2rem; margin: 2px 0; }
+        .card-name { font-weight: bold; font-size: 1.1rem; color: #0F172A; }
+
+        .stat-badge {
+            background: #E2E8F0;
+            padding: 5px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: #334155;
+            margin-top: 4px;
+        }
+
+        .stat-badge.highlight {
+            background: #FEE2E2;
+            color: var(--danger-dark);
+            border: 1px solid #FCA5A5;
+        }
+
+        /* Control Panel */
+        .interaction-panel {
+            background: white;
+            border: 2px solid #E2E8F0;
+            border-radius: 18px;
+            padding: 16px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+            text-align: center;
+        }
+
+        .instruction-box {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #991B1B;
+            margin-bottom: 10px;
+        }
+
+        .instruction-box .target-adj-highlight {
+            font-size: 1.85rem;
+            font-weight: 900;
+            color: #D97706;
+            background: #FEF3C7;
+            padding: 2px 12px;
+            border-radius: 8px;
+            border: 2px dashed #F59E0B;
+            display: inline-block;
+            margin: 0 4px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Step 2: Syllable Counter Box */
+        .syllable-box {
+            background: #EFF6FF;
+            border: 2px solid #93C5FD;
+            border-radius: 14px;
+            padding: 12px;
+            margin: 10px 0;
+        }
+
+        .syllable-title {
+            font-size: 1.15rem;
+            font-weight: bold;
+            color: #1E40AF;
+            margin-bottom: 8px;
+        }
+
+        .syllable-btns {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .syllable-btn {
+            background: white;
+            border: 2px solid #3B82F6;
+            color: #1E40AF;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 8px 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .syllable-btn:hover, .syllable-btn:active { background: #DBEAFE; transform: scale(1.05); }
+        .syllable-btn.selected { background: #2563EB; color: white; border-color: #1D4ED8; }
+
+        .sentence-builder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 1.25rem;
+            margin: 12px 0;
+            padding: 12px;
+            background: #F8FAFC;
+            border-radius: 12px;
+            border: 2px dashed #CBD5E1;
+        }
+
+        input[type="text"] {
+            font-size: 1.5rem;
+            padding: 10px 14px;
+            border: 3.5px solid #94A3B8;
+            border-radius: 10px;
+            width: 250px;
+            text-align: center;
+            font-weight: 800;
+            color: #991B1B;
+            transition: border-color 0.2s;
+            -webkit-user-select: text;
+            user-select: text;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #DC2626;
+            box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.25);
+        }
+
+        /* Multiple Choice Grid */
+        .mcq-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            max-width: 650px;
+            margin: 10px auto;
+        }
+
+        .mcq-btn {
+            background: white;
+            border: 3px solid #CBD5E1;
+            padding: 14px 18px;
+            border-radius: 12px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #1E293B;
+            touch-action: manipulation;
+        }
+
+        .mcq-btn:hover, .mcq-btn:active {
+            border-color: #DC2626;
+            background: #FEF2F2;
+        }
+
+        /* Hints & Feedback */
+        .hint-box {
+            display: none;
+            background: #FEF3C7;
+            border-left: 6px solid var(--warning);
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 8px;
+            text-align: left;
+            font-size: 1.1rem;
+            color: #78350F;
+        }
+
+        .feedback-banner {
+            display: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 1.15rem;
+            font-weight: bold;
+            margin-top: 12px;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-align: left;
+            line-height: 1.4;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.95); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .feedback-banner.critical {
+            background: #D1FAE5;
+            color: #065F46;
+            border: 3px solid #34D399;
+        }
+
+        .feedback-banner.glancing {
+            background: #FEF3C7;
+            color: #92400E;
+            border: 3px solid #FBBF24;
+        }
+
+        .feedback-banner.backfire {
+            background: #FEE2E2;
+            color: #991B1B;
+            border: 3px solid #F87171;
+        }
+
+        /* Animations */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-12px); }
+            40%, 80% { transform: translateX(12px); }
+        }
+
+        .shake-animation { animation: shake 0.4s ease-in-out; }
+
+        @keyframes flashGreen {
+            0% { background-color: rgba(241, 245, 249, 0.96); }
+            50% { background-color: #A7F3D0; }
+            100% { background-color: rgba(241, 245, 249, 0.96); }
+        }
+
+        .flash-success { animation: flashGreen 0.6s ease; }
+
+        /* Formative Summary Screen */
+        .summary-card {
+            background: white;
+            border-radius: 18px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            margin-top: 10px;
+        }
+
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin: 16px 0;
+        }
+
+        .stat-card {
+            background: #F8FAFC;
+            padding: 14px;
+            border-radius: 14px;
+            border: 2px solid #E2E8F0;
+            text-align: center;
+        }
+
+        .stat-card .number { font-size: 2rem; font-weight: bold; margin-top: 4px; }
+
+        .revisit-box {
+            background: #FEF2F2;
+            border: 2px dashed #FCA5A5;
+            border-radius: 14px;
+            padding: 16px;
+            margin-top: 14px;
+            text-align: left;
+        }
+
+        .revisit-box ul { margin: 6px 0 0 20px; padding: 0; }
+        .revisit-box li { margin-bottom: 6px; font-size: 1.05rem; color: #991B1B; line-height: 1.4; }
+
+        .screenshot-notice {
+            background: #EFF6FF;
+            border: 2px solid #93C5FD;
+            color: #1E40AF;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: bold;
+            margin-top: 16px;
+            text-align: center;
+            font-size: 1.05rem;
+        }
+
+        /* Screen reader utility */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
+
+        @media print {
+            body { background: white; padding: 0; }
+            #game-container { box-shadow: none; border: none; width: 100%; max-width: 100%; }
+            .icon-btn, .btn, .audio-controls, .btn-audio { display: none !important; }
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 6px; }
+            #game-container { padding: 12px; border-width: 2px; }
+            h1 { font-size: 1.75rem; }
+            h2 { font-size: 1.3rem; }
+            .cards-row { gap: 8px; }
+            .card { width: 110px; padding: 6px; }
+            .card-emoji { font-size: 2.2rem; }
+            .card-name { font-size: 0.95rem; }
+            .stat-badge { font-size: 0.8rem; padding: 3px; }
+            .sentence-builder { flex-direction: column; font-size: 1.1rem; }
+            input[type="text"] { width: 100%; font-size: 1.3rem; }
+            .mcq-btn { font-size: 1.15rem; }
+            .btn { padding: 12px 20px; font-size: 1.1rem; }
+            .instruction-box { font-size: 1.1rem; }
+            .instruction-box .target-adj-highlight { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <!-- Top HUD Bar -->
+    <div class="hud">
+        <div>Stage: <span id="hud-stage">1/10</span></div>
+        <div>Score: <span id="hud-score" style="color: #34D399;">0</span></div>
+        <div class="audio-controls">
+            <button class="icon-btn" id="btn-music" onclick="toggleMusic()" aria-label="Toggle Music" title="Toggle Music">🎵 Music On</button>
+            <button class="icon-btn" id="btn-sound" onclick="toggleSound()" aria-label="Toggle Sound Effects" title="Toggle Sound Effects">🔊 SFX On</button>
+        </div>
+    </div>
+    
+    <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="hud-progress"></div>
+    </div>
+
+    <!-- Screen 1: Start Screen -->
+    <div id="screen-start" class="screen active" style="text-align: center; padding: 16px 0;">
+        <h1>⚔️ Stat Clash II: Comparative War Duel!</h1>
+        <p style="font-size: 1.2rem; color: #334155; max-width: 650px; margin: 8px auto 16px auto; font-weight: 500;">
+            The sequel to Stat Clash! Defeat the Monster Bosses using your card stats, syllable counting, and comparative adjective rules!
+        </p>
+
+        <div style="background: white; border-radius: 18px; padding: 18px; text-align: left; max-width: 650px; margin: 0 auto 20px auto; border: 2px solid #CBD5E1; box-shadow: 0 4px 6px rgba(0,0,0,0.03);">
+            <h3 style="color: #991B1B; margin-top: 0; font-size: 1.25rem;">📜 How to Play:</h3>
+            <ol style="font-size: 1.05rem; line-height: 1.6; margin-bottom: 0; padding-left: 20px; color: #1E293B;">
+                <li><strong>STEP 1:</strong> Select a Card from your hand with a <strong>HIGHER</strong> stat.</li>
+                <li><strong>STEP 2:</strong> Count the syllables of the target adjective (click to listen!).</li>
+                <li><strong>STEP 3:</strong> Type or select the correct comparative spell to strike!</li>
+            </ol>
+        </div>
+
+        <button class="btn" onclick="startGame()" style="font-size: 1.4rem; padding: 16px 40px; border-radius: 50px;">
+            Enter Sequel Battle 🚀
+        </button>
+    </div>
+
+    <!-- Screen 2: Gameplay Screen -->
+    <div id="screen-game" class="screen">
+        <div class="arena-grid">
+            <!-- Boss Container -->
+            <div class="boss-box" id="boss-box">
+                <div style="font-weight: bold; color: #C2410C; font-size: 1.15rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                    🔥 Floor Boss Challenge
+                </div>
+                
+                <div class="hp-bar-outer">
+                    <div class="hp-bar-inner" id="boss-hp-bar"></div>
+                    <div class="hp-text" id="boss-hp-text">HP: 100 / 100</div>
+                </div>
+
+                <div class="cards-row" style="margin-top: 8px;">
+                    <div class="card boss-card" id="boss-card-display">
+                        <!-- Boss Card Injected by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 1: Player Hand Selection Area -->
+            <div id="hand-selection-area" style="text-align: center;">
+                <h3 style="margin-bottom: 6px; color: #991B1B; font-size: 1.3rem;">Step 1: Pick a card with a HIGHER stat!</h3>
+                <div class="cards-row" id="player-hand-container">
+                    <!-- Cards Injected by JS -->
+                </div>
+            </div>
+
+            <!-- STEP 2 & 3: Interaction Controls (Hidden until card is selected) -->
+            <div class="interaction-panel" id="interaction-panel" style="display: none;">
+                <div class="instruction-box" id="instruction-text">
+                    Compare the adjective to launch your attack!
+                </div>
+
+                <!-- Step 2: Syllable Counter Box -->
+                <div class="syllable-box" id="syllable-box">
+                    <div class="syllable-title">
+                        Step 2: How many syllables in "<span id="syllable-adj-text" style="text-decoration: underline;">adjective</span>"? 
+                        <button class="btn-audio" onclick="speakAdjective()">🔊 Listen</button>
+                    </div>
+                    <div class="syllable-btns">
+                        <button class="syllable-btn" onclick="selectSyllable(1, this)">1 Syllable</button>
+                        <button class="syllable-btn" onclick="selectSyllable(2, this)">2 Syllables</button>
+                        <button class="syllable-btn" onclick="selectSyllable(3, this)">3+ Syllables</button>
+                    </div>
+                </div>
+
+                <!-- Step 3 Input Type 1: Sentence Typing -->
+                <div id="interaction-typing" style="display: none;">
+                    <div style="font-weight: bold; color: #991B1B; margin-bottom: 6px;">Step 3: Complete the comparative spell!</div>
+                    <div class="sentence-builder">
+                        <span>My</span>
+                        <strong id="display-player-card" style="color: #991B1B;">[Card]</strong>
+                        <span>is</span>
+                        <label for="comparative-input" class="sr-only">Type comparative adjective</label>
+                        <input type="text" id="comparative-input" placeholder="e.g. taller than" autocomplete="off" autocapitalize="off" spellcheck="false">
+                        <span>the</span>
+                        <strong id="display-boss-card" style="color: var(--danger);">[Boss]</strong>.
+                    </div>
+                </div>
+
+                <!-- Step 3 Input Type 2: Multiple Choice Selection -->
+                <div id="interaction-mcq" style="display: none;">
+                    <div style="font-weight: bold; color: #991B1B; margin-bottom: 6px;">Step 3: Choose the correct comparative form!</div>
+                    <div class="mcq-grid" id="mcq-options-container">
+                        <!-- Options injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Hint display -->
+                <div class="hint-box" id="hint-box"></div>
+
+                <!-- Buttons Area -->
+                <div style="display: flex; justify-content: center; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+                    <button class="btn btn-warning" id="btn-hint" onclick="showHint()">💡 Hint</button>
+                    <button class="btn" id="btn-attack" onclick="submitAnswer()">⚔️ Attack!</button>
+                    <button class="btn" id="btn-next" onclick="nextStage()" style="display: none; background: var(--secondary);">Next Stage ➡️</button>
+                </div>
+
+                <!-- Feedback Banner -->
+                <div class="feedback-banner" id="feedback-banner"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen 3: Formative Assessment Summary -->
+    <div id="screen-summary" class="screen">
+        <h2>🎉 Battle Completed!</h2>
+        <p style="text-align: center; color: #475569; font-size: 1.1rem; font-weight: 500;">Here is your comparative grammar performance report.</p>
+
+        <div class="summary-card">
+            <div class="stats-summary">
+                <div class="stat-card">
+                    <div style="color: #64748B; font-weight: bold;">Final Score</div>
+                    <div class="number" id="summary-score" style="color: #991B1B;">0 / 10</div>
+                </div>
+                <div class="stat-card">
+                    <div style="color: #64748B; font-weight: bold;">Correct Answers</div>
+                    <div class="number" id="summary-correct" style="color: var(--secondary);">0</div>
+                </div>
+                <div class="stat-card">
+                    <div style="color: #64748B; font-weight: bold;">Incorrect Attempts</div>
+                    <div class="number" id="summary-incorrect" style="color: var(--danger);">0</div>
+                </div>
+            </div>
+
+            <div class="revisit-box" id="revisit-box" style="display: none;">
+                <h3 style="color: #991B1B; margin-top: 0; font-size: 1.2rem;">📚 Comparative Rules to Practice:</h3>
+                <p style="margin-bottom: 6px; color: #7F1D1D; font-weight: 500;">You struggled with the following rule types. Practice these again:</p>
+                <ul id="revisit-list">
+                    <!-- Specific rules populated by JS -->
+                </ul>
+            </div>
+
+            <div id="perfect-msg" style="display: none; text-align: center; color: var(--secondary); font-size: 1.3rem; font-weight: bold; padding: 16px; background: #ECFDF5; border-radius: 14px; border: 2px solid #A7F3D0;">
+                🌟 Outstanding! You mastered all comparative adjective rules!
+            </div>
+
+            <div class="screenshot-notice">
+                📸 Student Action: Take a screenshot of this summary screen and submit it to your teacher!
+            </div>
+
+            <div style="text-align: center; margin-top: 20px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-secondary" onclick="window.print()" style="font-size: 1.1rem;">
+                    🖨️ Print / Save PDF
+                </button>
+                <button class="btn" onclick="resetGame()" style="font-size: 1.1rem;">
+                    🔄 Play Again
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* ==========================================================================
+       WAR-LIKE SYNTHESIZED AUDIO SYSTEM (Web Audio API - Drums & Brass Horns)
+       ========================================================================== */
+    let audioCtx = null;
+    let musicEnabled = true;
+    let sfxEnabled = true;
+    let bgMusicTimer = null;
+    let musicStep = 0;
+
+    function initAudio() {
+        if (!audioCtx) {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (AudioContextClass) {
+                audioCtx = new AudioContextClass();
+            }
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+
+    function playSoundTone(freq, type, duration, vol = 0.1) {
+        if (!sfxEnabled) return;
+        initAudio();
+        if (!audioCtx) return;
+
+        try {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        } catch(e) { console.error(e); }
+    }
+
+    // War Drums Synthesizer
+    function playWarDrum(freq, duration = 0.2, vol = 0.15) {
+        if (!musicEnabled && !sfxEnabled) return;
+        initAudio();
+        if (!audioCtx || audioCtx.state !== 'running') return;
+
+        try {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + duration);
+
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        } catch(e){}
+    }
+
+    // War Brass Horn Call Synthesizer
+    function playWarHorn(freq, duration = 0.3, vol = 0.08) {
+        if (!musicEnabled && !sfxEnabled) return;
+        initAudio();
+        if (!audioCtx || audioCtx.state !== 'running') return;
+
+        try {
+            const osc1 = audioCtx.createOscillator();
+            const osc2 = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc1.type = 'sawtooth';
+            osc2.type = 'triangle';
+            osc1.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            osc2.frequency.setValueAtTime(freq * 1.005, audioCtx.currentTime);
+
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+            osc1.connect(gain);
+            osc2.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc1.start();
+            osc2.start();
+            osc1.stop(audioCtx.currentTime + duration);
+            osc2.stop(audioCtx.currentTime + duration);
+        } catch(e){}
+    }
+
+    // Sound FX Triggers
+    function sfxCardSelect() { playSoundTone(300, 'sawtooth', 0.1, 0.1); }
+    function sfxCriticalHit() {
+        playWarHorn(220, 0.15, 0.15);
+        setTimeout(() => playWarHorn(277.18, 0.15, 0.15), 100);
+        setTimeout(() => playWarHorn(329.63, 0.3, 0.2), 200);
+    }
+    function sfxGlancingBlow() {
+        playWarDrum(80, 0.2, 0.15);
+        setTimeout(() => playWarDrum(60, 0.3, 0.15), 120);
+    }
+    function sfxBackfire() {
+        playSoundTone(150, 'sawtooth', 0.2, 0.15);
+        setTimeout(() => playSoundTone(110, 'sawtooth', 0.3, 0.15), 120);
+    }
+
+    // Background War March Loop
+    const warDrumPattern = [120, 0, 90, 110, 150, 0, 90, 0, 120, 0, 90, 110, 180, 0, 90, 0];
+    const warHornNotes =  [110, 0, 0, 0, 146.83, 0, 0, 0, 110, 0, 0, 0, 130.81, 0, 164.81, 0];
+
+    function startBgMusic() {
+        if (bgMusicTimer) clearInterval(bgMusicTimer);
+        bgMusicTimer = setInterval(() => {
+            if (musicEnabled && audioCtx && audioCtx.state === 'running') {
+                const step = musicStep % 16;
+                if (warDrumPattern[step] > 0) playWarDrum(warDrumPattern[step], 0.18, 0.06);
+                if (warHornNotes[step] > 0) playWarHorn(warHornNotes[step], 0.35, 0.04);
+                musicStep++;
+            }
+        }, 220);
+    }
+
+    function toggleMusic() {
+        musicEnabled = !musicEnabled;
+        document.getElementById('btn-music').innerText = musicEnabled ? "🎵 Music On" : "🔇 Music Off";
+        if (musicEnabled) {
+            initAudio();
+            startBgMusic();
+        }
+    }
+
+    function toggleSound() {
+        sfxEnabled = !sfxEnabled;
+        document.getElementById('btn-sound').innerText = sfxEnabled ? "🔊 SFX On" : "🔇 SFX Off";
+        if (sfxEnabled) sfxCardSelect();
+    }
+
+    /* Speech Synthesis Audio for Adjectives */
+    function speakAdjective() {
+        const stage = stagesData[currentStageIdx];
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(stage.baseAdjective);
+            utterance.rate = 0.85;
+            utterance.lang = 'en-US';
+            window.speechSynthesis.speak(utterance);
+        } else {
+            alert(`Audio: "${stage.baseAdjective}"`);
+        }
+    }
+
+
+    /* ==========================================================================
+       CURRICULUM GAME STAGES DATA (Primary 4 - Updated Word List)
+       ========================================================================== */
+    const stagesData = [
+        {
+            id: 1,
+            ruleType: "Regular Short Adjective (-er)",
+            baseAdjective: "tall",
+            syllables: 1,
+            interactionType: "typing",
+            targetStat: "Height",
+            expectedAnswers: ["taller than"],
+            hint: "Rule: 1 syllable word. Add '-er' + 'than' (e.g., tall ➔ taller than).",
+            boss: { name: "Ogre Giant", emoji: "👹", statValue: 40, hp: 100 },
+            playerCards: [
+                { name: "Sky Tower", emoji: "🏰", statValue: 95 },
+                { name: "Wooden Fence", emoji: "🪵", statValue: 15 },
+                { name: "Garden Gnome", emoji: "🧙", statValue: 5 }
+            ]
+        },
+        {
+            id: 2,
+            ruleType: "Adjective ending in 'e' (-r)",
+            baseAdjective: "brave",
+            syllables: 1,
+            interactionType: "typing",
+            targetStat: "Courage",
+            expectedAnswers: ["braver than"],
+            hint: "Rule: Ends in 'e'. Just add '-r' + 'than' (e.g., brave ➔ braver than).",
+            boss: { name: "Scared Goblin", emoji: "👺", statValue: 20, hp: 100 },
+            playerCards: [
+                { name: "Knight Hero", emoji: "🛡️", statValue: 90 },
+                { name: "Timid Rabbit", emoji: "🐇", statValue: 5 },
+                { name: "Fearful Mouse", emoji: "🐁", statValue: 10 }
+            ]
+        },
+        {
+            id: 3,
+            ruleType: "CVC Short Adjective (Double Final Consonant + er)",
+            baseAdjective: "thin",
+            syllables: 1,
+            interactionType: "mcq",
+            targetStat: "Lightness",
+            mcqOptions: [
+                { text: "thinner than", correct: true },
+                { text: "thiner than", correct: false, reason: "For CVC (t-h-i-n), double the last letter 'n': 'thinner than'." },
+                { text: "more thin than", correct: false, reason: "Short 1-syllable words use '-er', not 'more'." }
+            ],
+            hint: "Rule: 1-syllable CVC word (th-i-n). Double the 'n' and add '-er than'.",
+            boss: { name: "Heavy Anvil", emoji: "🧱", statValue: 15, hp: 100 },
+            playerCards: [
+                { name: "Paper Sheet", emoji: "📄", statValue: 98 },
+                { name: "Wooden Log", emoji: "🪵", statValue: 25 },
+                { name: "Stone Rock", emoji: "🪨", statValue: 5 }
+            ]
+        },
+        {
+            id: 4,
+            ruleType: "CVC Short Adjective (Double Final Consonant + er)",
+            baseAdjective: "big",
+            syllables: 1,
+            interactionType: "typing",
+            targetStat: "Size",
+            expectedAnswers: ["bigger than"],
+            hint: "Rule: 1-syllable CVC word (b-i-g). Double the 'g' and add '-er than'.",
+            boss: { name: "Cave Bat", emoji: "🦇", statValue: 30, hp: 100 },
+            playerCards: [
+                { name: "Grizzly Bear", emoji: "🐻", statValue: 90 },
+                { name: "Tree Frog", emoji: "🐸", statValue: 10 },
+                { name: "Goldfish", emoji: "🐠", statValue: 5 }
+            ]
+        },
+        {
+            id: 5,
+            ruleType: "Adjective ending in 'y' (Change 'y' to 'i' + er)",
+            baseAdjective: "pretty",
+            syllables: 2,
+            interactionType: "typing",
+            targetStat: "Charm",
+            expectedAnswers: ["prettier than"],
+            hint: "Rule: Ends in 'y'. Change 'y' to 'i' + '-er' + 'than' (e.g., pretty ➔ prettier than).",
+            boss: { name: "Mud Troll", emoji: "🧌", statValue: 15, hp: 100 },
+            playerCards: [
+                { name: "Peacock Queen", emoji: "🦚", statValue: 92 },
+                { name: "Wild Toad", emoji: "🐸", statValue: 10 },
+                { name: "Gray Pebble", emoji: "🪨", statValue: 2 }
+            ]
+        },
+        {
+            id: 6,
+            ruleType: "Adjective ending in 'y' (Change 'y' to 'i' + er)",
+            baseAdjective: "messy",
+            syllables: 2,
+            interactionType: "mcq",
+            targetStat: "Clutter",
+            mcqOptions: [
+                { text: "messier than", correct: true },
+                { text: "messyer than", correct: false, reason: "Don't keep the 'y'! Change 'y' to 'i' before adding '-er'." },
+                { text: "more messy than", correct: false, reason: "Words ending in 'y' change 'y' to 'i' + '-er'." }
+            ],
+            hint: "Rule: 'messy' ends in 'y'. Change 'y' to 'i' and add '-er than'.",
+            boss: { name: "Clean Desk", emoji: "🧹", statValue: 10, hp: 100 },
+            playerCards: [
+                { name: "Muddy Monster", emoji: "👾", statValue: 95 },
+                { name: "Neat Folder", emoji: "📁", statValue: 20 },
+                { name: "Shiny Coin", emoji: "🪙", statValue: 5 }
+            ]
+        },
+        {
+            id: 7,
+            ruleType: "Adjective ending in 'y' (Change 'y' to 'i' + er)",
+            baseAdjective: "healthy",
+            syllables: 2,
+            interactionType: "typing",
+            targetStat: "Fitness",
+            expectedAnswers: ["healthier than"],
+            hint: "Rule: Ends in 'y'. Change 'y' to 'i' + '-er' + 'than' (e.g., healthy ➔ healthier than).",
+            boss: { name: "Greasy Donut", emoji: "🍩", statValue: 15, hp: 100 },
+            playerCards: [
+                { name: "Fresh Apple", emoji: "🍎", statValue: 90 },
+                { name: "Salty Chip", emoji: "🍟", statValue: 20 },
+                { name: "Sweet Candy", emoji: "🍬", statValue: 10 }
+            ]
+        },
+        {
+            id: 8,
+            ruleType: "Long Adjective (more + adjective + than)",
+            baseAdjective: "exciting",
+            syllables: 3,
+            interactionType: "typing",
+            targetStat: "Thrill",
+            expectedAnswers: ["more exciting than"],
+            hint: "Rule: 3 syllables (ex-cit-ing)! Use 'more' + adjective + 'than'.",
+            boss: { name: "Dull Rock", emoji: "🪨", statValue: 10, hp: 100 },
+            playerCards: [
+                { name: "Roller Coaster", emoji: "🎢", statValue: 98 },
+                { name: "Old Book", emoji: "📖", statValue: 30 },
+                { name: "Wooden Chair", emoji: "🪑", statValue: 5 }
+            ]
+        },
+        {
+            id: 9,
+            ruleType: "Long Adjective (more + adjective + than)",
+            baseAdjective: "interesting",
+            syllables: 3,
+            interactionType: "mcq",
+            targetStat: "Wonder",
+            mcqOptions: [
+                { text: "more interesting than", correct: true },
+                { text: "interestinger than", correct: false, reason: "Long adjectives (3+ syllables) do NOT take '-er'. Use 'more'." },
+                { text: "most interesting than", correct: false, reason: "Use 'more' for comparing two items, not 'most'." }
+            ],
+            hint: "Rule: 'in-ter-est-ing' is a long adjective. Use 'more interesting than'.",
+            boss: { name: "Blank Wall", emoji: "🧱", statValue: 10, hp: 100 },
+            playerCards: [
+                { name: "Space Galaxy", emoji: "🌌", statValue: 96 },
+                { name: "Plain Paper", emoji: "📄", statValue: 15 },
+                { name: "Empty Box", emoji: "📦", statValue: 2 }
+            ]
+        },
+        {
+            id: 10,
+            ruleType: "Long Adjective (more + adjective + than)",
+            baseAdjective: "popular",
+            syllables: 3,
+            interactionType: "typing",
+            targetStat: "Fame",
+            expectedAnswers: ["more popular than"],
+            hint: "Rule: 3 syllables (pop-u-lar)! Use 'more' + adjective + 'than'.",
+            boss: { name: "Unknown Goblin", emoji: "👺", statValue: 15, hp: 100 },
+            playerCards: [
+                { name: "Superstar Dragon", emoji: "🐉", statValue: 95 },
+                { name: "Quiet Beetle", emoji: "🪲", statValue: 10 },
+                { name: "Shy Snail", emoji: "🐌", statValue: 5 }
+            ]
+        }
+    ];
+
+
+    /* ==========================================================================
+       GAME STATE MANAGEMENT
+       ========================================================================== */
+    let currentStageIdx = 0;
+    let score = 0;
+    let totalCorrect = 0;
+    let totalIncorrect = 0;
+    let selectedPlayerCard = null;
+    let selectedMcqOption = null;
+    let selectedSyllableVal = null;
+    let missedRuleTypes = new Set();
+    let currentAttemptCount = 0;
+
+    // DOM Elements
+    const hudStage = document.getElementById('hud-stage');
+    const hudScore = document.getElementById('hud-score');
+    const hudProgress = document.getElementById('hud-progress');
+
+    const bossCardDisplay = document.getElementById('boss-card-display');
+    const bossHpBar = document.getElementById('boss-hp-bar');
+    const bossHpText = document.getElementById('boss-hp-text');
+    const playerHandContainer = document.getElementById('player-hand-container');
+    const interactionPanel = document.getElementById('interaction-panel');
+
+    const instructionText = document.getElementById('instruction-text');
+    const syllableAdjText = document.getElementById('syllable-adj-text');
+    const interactionTyping = document.getElementById('interaction-typing');
+    const interactionMcq = document.getElementById('interaction-mcq');
+    const mcqOptionsContainer = document.getElementById('mcq-options-container');
+
+    const comparativeInput = document.getElementById('comparative-input');
+    const displayPlayerCard = document.getElementById('display-player-card');
+    const displayBossCard = document.getElementById('display-boss-card');
+
+    const hintBox = document.getElementById('hint-box');
+    const feedbackBanner = document.getElementById('feedback-banner');
+    const btnAttack = document.getElementById('btn-attack');
+    const btnNext = document.getElementById('btn-next');
+    const btnHint = document.getElementById('btn-hint');
+
+
+    /* ==========================================================================
+       GAME CORE FLOW FUNCTIONS
+       ========================================================================== */
+
+    function switchScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+    }
+
+    function startGame() {
+        initAudio();
+        startBgMusic();
+        currentStageIdx = 0;
+        score = 0;
+        totalCorrect = 0;
+        totalIncorrect = 0;
+        missedRuleTypes.clear();
+        
+        switchScreen('screen-game');
+        updateHUD();
+        loadCurrentStage();
+    }
+
+    function updateHUD() {
+        hudStage.innerText = `${currentStageIdx + 1}/${stagesData.length}`;
+        hudScore.innerText = score;
+        const percent = ((currentStageIdx) / stagesData.length) * 100;
+        hudProgress.style.width = `${percent}%`;
+    }
+
+    function loadCurrentStage() {
+        const stage = stagesData[currentStageIdx];
+        selectedPlayerCard = null;
+        selectedMcqOption = null;
+        selectedSyllableVal = null;
+        currentAttemptCount = 0;
+
+        // Reset Syllable buttons
+        document.querySelectorAll('.syllable-btn').forEach(btn => btn.classList.remove('selected'));
+
+        // Hide Interaction Panel until a card is selected!
+        interactionPanel.style.display = 'none';
+
+        // Reset UI Components
+        feedbackBanner.style.display = 'none';
+        feedbackBanner.className = 'feedback-banner';
+        hintBox.style.display = 'none';
+        comparativeInput.value = '';
+        comparativeInput.disabled = false;
+
+        btnAttack.style.display = 'inline-flex';
+        btnNext.style.display = 'none';
+        btnHint.disabled = false;
+
+        // Render Boss
+        bossCardDisplay.innerHTML = `
+            <div class="card-emoji">${stage.boss.emoji}</div>
+            <div class="card-name">${stage.boss.name}</div>
+            <div class="stat-badge highlight">${stage.targetStat}: ${stage.boss.statValue}</div>
+        `;
+        displayBossCard.innerText = stage.boss.name;
+        updateBossHP(100);
+
+        // Render Player Hand Cards for Step 1
+        playerHandContainer.innerHTML = '';
+        stage.playerCards.forEach(card => {
+            const cardEl = document.createElement('div');
+            cardEl.className = 'card';
+            cardEl.setAttribute('role', 'button');
+            cardEl.setAttribute('tabindex', '0');
+            cardEl.innerHTML = `
+                <div class="card-emoji">${card.emoji}</div>
+                <div class="card-name">${card.name}</div>
+                <div class="stat-badge">${stage.targetStat}: ${card.statValue}</div>
+            `;
+
+            cardEl.onclick = () => selectCard(card, cardEl);
+            cardEl.onkeypress = (e) => { if(e.key==='Enter' || e.key===' ') selectCard(card, cardEl); };
+            playerHandContainer.appendChild(cardEl);
+        });
+
+        // Setup Syllable Adjective Text
+        syllableAdjText.innerText = stage.baseAdjective;
+
+        // Setup Interaction Mode
+        if (stage.interactionType === 'typing') {
+            interactionTyping.style.display = 'block';
+            interactionMcq.style.display = 'none';
+        } else {
+            interactionTyping.style.display = 'none';
+            interactionMcq.style.display = 'block';
+            renderMcqOptions(stage.mcqOptions);
+        }
+    }
+
+    function selectCard(card, cardEl) {
+        if (btnNext.style.display === 'inline-flex') return; // Stage already completed
+        
+        sfxCardSelect();
+        selectedPlayerCard = card;
+
+        document.querySelectorAll('#player-hand-container .card').forEach(c => c.classList.remove('selected'));
+        cardEl.classList.add('selected');
+
+        displayPlayerCard.innerText = card.name;
+        const stage = stagesData[currentStageIdx];
+
+        // Reveal Step 2 & 3 Interaction Panel!
+        interactionPanel.style.display = 'block';
+
+        instructionText.innerHTML = `Adjective Target: "<span class="target-adj-highlight">${stage.baseAdjective}</span>"`;
+
+        // Auto play audio once selected
+        speakAdjective();
+
+        if (stage.interactionType === 'typing') {
+            setTimeout(() => comparativeInput.focus(), 100);
+        }
+
+        interactionPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function selectSyllable(num, btn) {
+        sfxCardSelect();
+        selectedSyllableVal = num;
+        document.querySelectorAll('.syllable-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+    }
+
+    function renderMcqOptions(options) {
+        mcqOptionsContainer.innerHTML = '';
+        options.forEach((opt) => {
+            const btn = document.createElement('button');
+            btn.className = 'mcq-btn';
+            btn.innerText = opt.text;
+            btn.onclick = () => {
+                sfxCardSelect();
+                selectedMcqOption = opt;
+                document.querySelectorAll('.mcq-btn').forEach(b => b.style.borderColor = '#CBD5E1');
+                btn.style.borderColor = '#DC2626';
+            };
+            mcqOptionsContainer.appendChild(btn);
+        });
+    }
+
+    function showHint() {
+        sfxCardSelect();
+        const stage = stagesData[currentStageIdx];
+        hintBox.innerText = stage.hint;
+        hintBox.style.display = 'block';
+    }
+
+    function updateBossHP(hpVal) {
+        const clampedHp = Math.max(0, hpVal);
+        bossHpBar.style.width = `${clampedHp}%`;
+        bossHpText.innerText = `HP: ${clampedHp} / 100`;
+    }
+
+    /* ==========================================================================
+       SUBMISSION & ANSWER EVALUATION
+       ========================================================================== */
+
+    function submitAnswer() {
+        if (!selectedPlayerCard) {
+            triggerFeedback('backfire', '⚠️ Please select a card from Step 1 first!');
+            return;
+        }
+
+        const stage = stagesData[currentStageIdx];
+        currentAttemptCount++;
+
+        // 1. Check Syllable Selection
+        if (!selectedSyllableVal) {
+            triggerFeedback('backfire', '⚠️ Please complete Step 2: Choose how many syllables in the word!');
+            return;
+        }
+
+        const expectedSyllables = stage.syllables >= 3 ? 3 : stage.syllables;
+        const isSyllableCorrect = (selectedSyllableVal === expectedSyllables);
+
+        // 2. Check Grammar correctness
+        let isGrammarCorrect = false;
+        let specificErrorMsg = "";
+
+        if (stage.interactionType === 'typing') {
+            const rawVal = comparativeInput.value.trim().toLowerCase();
+            const cleanVal = rawVal.replace(/\s+/g, ' ').replace(/[.,!?]/g, '');
+
+            if (cleanVal === '') {
+                triggerFeedback('backfire', '⚠️ Please type your comparative response in Step 3 before attacking!');
+                return;
+            }
+
+            isGrammarCorrect = stage.expectedAnswers.some(ans => ans.toLowerCase() === cleanVal);
+
+            if (!isGrammarCorrect) {
+                if (!cleanVal.includes('than')) {
+                    specificErrorMsg = " You forgot the word 'than'!";
+                } else {
+                    specificErrorMsg = ` Double check spelling for '${stage.baseAdjective}'.`;
+                }
+            }
+        } else { // MCQ Mode
+            if (!selectedMcqOption) {
+                triggerFeedback('backfire', '⚠️ Please select a comparative option in Step 3!');
+                return;
+            }
+            isGrammarCorrect = selectedMcqOption.correct;
+            if (!isGrammarCorrect) {
+                specificErrorMsg = ` ${selectedMcqOption.reason}`;
+            }
+        }
+
+        const isStatHigher = selectedPlayerCard.statValue > stage.boss.statValue;
+
+        // Check if both Syllable + Grammar are correct
+        if (!isSyllableCorrect) {
+            sfxBackfire();
+            totalIncorrect++;
+            missedRuleTypes.add("Syllable Counting");
+            shakeContainer();
+            triggerFeedback('backfire', `💥 Incorrect Syllable Count! "${stage.baseAdjective}" has ${stage.syllables >= 3 ? '3+' : stage.syllables} syllable(s). Try counting again!`);
+            return;
+        }
+
+        // Evaluate Outcomes
+        if (isGrammarCorrect) {
+            if (isStatHigher) {
+                // CRITICAL HIT
+                sfxCriticalHit();
+                updateBossHP(0);
+                flashContainerSuccess();
+                
+                triggerFeedback('critical', 
+                    `🌟 CRITICAL HIT! Syllable count & grammar 100% correct! Your card dealt 100 Damage and defeated the boss!`
+                );
+                
+                if (currentAttemptCount === 1) score++;
+                totalCorrect++;
+                completeStagePass();
+
+            } else {
+                // GLANCING BLOW
+                sfxGlancingBlow();
+                updateBossHP(70);
+                totalIncorrect++;
+                
+                triggerFeedback('glancing', 
+                    `🛡️ GLANCING BLOW! Your grammar is correct! However, your ${selectedPlayerCard.name} (${selectedPlayerCard.statValue}) has a lower ${stage.targetStat} stat than the ${stage.boss.name} (${stage.boss.statValue}). Pick a stronger card from your hand above!`
+                );
+            }
+        } else {
+            // BACKFIRE
+            sfxBackfire();
+            totalIncorrect++;
+            missedRuleTypes.add(stage.ruleType);
+            shakeContainer();
+
+            triggerFeedback('backfire', 
+                `💥 BACKFIRE! Grammar error!${specificErrorMsg} Read the clue and try again!`
+            );
+        }
+
+        updateHUD();
+    }
+
+    function triggerFeedback(type, text) {
+        feedbackBanner.className = `feedback-banner ${type}`;
+        feedbackBanner.innerHTML = text;
+        feedbackBanner.style.display = 'block';
+    }
+
+    function shakeContainer() {
+        const container = document.getElementById('game-container');
+        container.classList.remove('shake-animation');
+        void container.offsetWidth; // Force reflow
+        container.classList.add('shake-animation');
+    }
+
+    function flashContainerSuccess() {
+        const container = document.getElementById('game-container');
+        container.classList.remove('flash-success');
+        void container.offsetWidth;
+        container.classList.add('flash-success');
+    }
+
+    function completeStagePass() {
+        btnAttack.style.display = 'none';
+        btnNext.style.display = 'inline-flex';
+        comparativeInput.disabled = true;
+
+        document.querySelectorAll('#player-hand-container .card').forEach(c => c.style.pointerEvents = 'none');
+        btnNext.focus();
+    }
+
+    function nextStage() {
+        currentStageIdx++;
+        if (currentStageIdx < stagesData.length) {
+            updateHUD();
+            loadCurrentStage();
+        } else {
+            renderSummaryScreen();
+        }
+    }
+
+    /* ==========================================================================
+       FORMATIVE ASSESSMENT SUMMARY REPORT
+       ========================================================================== */
+
+    function renderSummaryScreen() {
+        switchScreen('screen-summary');
+
+        document.getElementById('summary-score').innerText = `${score} / ${stagesData.length}`;
+        document.getElementById('summary-correct').innerText = totalCorrect;
+        document.getElementById('summary-incorrect').innerText = totalIncorrect;
+
+        const revisitBox = document.getElementById('revisit-box');
+        const revisitList = document.getElementById('revisit-list');
+        const perfectMsg = document.getElementById('perfect-msg');
+
+        revisitList.innerHTML = '';
+
+        if (missedRuleTypes.size > 0) {
+            revisitBox.style.display = 'block';
+            perfectMsg.style.display = 'none';
+
+            missedRuleTypes.forEach(rule => {
+                const li = document.createElement('li');
+                li.innerText = rule;
+                revisitList.appendChild(li);
+            });
+        } else {
+            revisitBox.style.display = 'none';
+            perfectMsg.style.display = 'block';
+        }
+    }
+
+    function resetGame() {
+        startGame();
+    }
+
+    // Keyboard support for input submission
+    comparativeInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (btnAttack.style.display !== 'none') {
+                submitAnswer();
+            }
+        }
+    });
+
+</script>
+</body>
+</html>
